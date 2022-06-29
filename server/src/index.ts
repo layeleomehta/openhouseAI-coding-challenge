@@ -43,12 +43,13 @@ app.post("/api/v1/submit-log", async (req: Request, res: Response) => {
 }); 
 
 app.get("/api/v1/:userId/:actionType/retrieve-logs", async (req: Request, res: Response) => {
-    const userId = req.params.userId; 
-    const actionType = req.params.actionType; 
-    
+    // set req.params variables to wildcard match any string "%" in db column if their value is "any"
+    let userId = req.params.userId.toLowerCase()=="any" ? "%" : req.params.userId; 
+    let actionType = req.params.actionType.toLowerCase()=="any" ? "%" : req.params.actionType.toUpperCase(); 
+
     const result = await pool.query(
-        "SELECT actionObj FROM UserSessionLogs WHERE userId=$1 AND actionType=$2", 
-        [userId,
+        "SELECT actionObj FROM UserSessionLogs WHERE userId LIKE $1 AND actionType LIKE $2", 
+        [userId, 
         actionType]
         ); 
 
@@ -57,8 +58,7 @@ app.get("/api/v1/:userId/:actionType/retrieve-logs", async (req: Request, res: R
         response.push(actionObj.actionobj); 
     }
 
-    console.log(response); 
-    res.json("Hey"); 
+    res.json({"logs-from-db": response}); 
 }); 
 
 app.listen(PORT, () => {
