@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { json } from "body-parser"; 
 import { pool } from "./database/db";
 const PORT = 3000; 
@@ -38,29 +38,45 @@ app.post("/api/v1/submit-log", async (req: Request, res: Response) => {
         
     } catch (err: any) {
         console.error(err.message); 
+        return; 
     }
-``
 }); 
 
-app.get("/api/v1/:userId/:actionType/:lowerBoundTime/:upperBoundTime/retrieve-logs", async (req: Request, res: Response) => {
-    // set req.params variables to wildcard match any string "%" in db column if their value is "any"
-    let userId = req.params.userId.toLowerCase()=="any" ? "%" : req.params.userId; 
-    let actionType = req.params.actionType.toLowerCase()=="any" ? "%" : req.params.actionType.toUpperCase(); 
-    const actionTime = "2018-10-18T21:37:28-06:00"; 
+app.get("/api/v1/:userId/:actionType/:lowerBoundTime/:upperBoundTime/retrieve-logs", async (req: Request, res: Response, next: NextFunction) => {
+    // setting req params to default values if user specifies 'any' in the URL
+    const userId = req.params.userId.toLowerCase()=="any" ? "%" : req.params.userId; 
+    const actionType = req.params.actionType.toLowerCase()=="any" ? "%" : req.params.actionType.toUpperCase(); 
+    const lowerBoundTime = req.params.lowerBoundTime=="any" ? "0001-01-01T00:00:01-06:00" : req.params.lowerBoundTime; 
+    const upperBoundTime = req.params.upperBoundTime=="any" ? "9999-12-31T23:59:59-06:00" : req.params.lowerBoundTime; 
 
-    const result = await pool.query(
-        "SELECT actionObj FROM UserSessionLogs WHERE userId LIKE $1 AND actionType LIKE $2 AND actionTime=$3::timestamptz", 
-        [userId, 
-        actionType, 
-        actionTime]
-        ); 
-
-    let response = []
-    for (const actionObj of result.rows) {
-        response.push(actionObj.actionobj); 
+    // handle incorrect format for time bounds
+    if(lowerBoundTime.length != 25 || upperBoundTime.length != 25) {
+        next(new Error("please input a valid time!")); 
+        return; 
     }
 
-    res.json({"logs-from-db": response}); 
+    try {
+        const result = await pool.query(
+            "SELECT actionObj FROM UserSessionLogs WHERE userId LIKE $1 AND actionType LIKE $2 AND actionTime>=$3::timestamptz AND actionTime<=$4::timestamptz", 
+            [userId, 
+            actionType, 
+            lowerBoundTime, 
+            upperBoundTime]
+            ); 
+    
+        let response = []
+        for (const actionObj of result.rows) {
+            response.push(actionObj.actionobj); 
+        }
+    
+        res.json({"logs-from-db": response}); 
+        
+    } catch (err: any) {
+        console.error(err.message); 
+        return; 
+        
+    }
+
 }); 
 
 app.listen(PORT, () => {
