@@ -1,5 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 import { pool } from "../database/db";
+import { BadRequestError } from "../errors/bad-request-error";
 
 const router = express.Router(); 
 
@@ -12,8 +13,7 @@ router.get("/api/v1/:userId/:actionType/:lowerBoundTime/:upperBoundTime/retrieve
 
     // handle incorrect format for time bounds
     if(lowerBoundTime.length != 25 || upperBoundTime.length != 25) {
-        next(new Error("please input a valid time!")); 
-        return; 
+        return next(new BadRequestError("Please enter a valid timestamp in your request!")); 
     }
 
     try {

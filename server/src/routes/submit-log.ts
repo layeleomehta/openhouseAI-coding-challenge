@@ -1,10 +1,16 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { pool } from "../database/db";
+import { BadRequestError } from "../errors/bad-request-error";
 
 const router = express.Router(); 
 
-router.post("/api/v1/submit-log", async (req: Request, res: Response) => {
+router.post("/api/v1/submit-log", async (req: Request, res: Response, next: NextFunction) => {
     try {
+        // ensure that valid information is provided to the route handler
+        if(!req.body.userId || !req.body.sessionId || !req.body.actions || typeof req.body.actions == 'string'){
+            return next(new BadRequestError("Please input valid userId, sessionId and actions keys in your request body!")); 
+        }
+
         // obtain relevant information from request body
         const userId = req.body.userId; 
         const sessionId = req.body.sessionId; 
@@ -13,6 +19,10 @@ router.post("/api/v1/submit-log", async (req: Request, res: Response) => {
         // add each user log to the UserSessionLogs table in database. Append output of each query into 'response' array. 
         let response = []
         for (const action of actions){
+            // ensure the action object is formatted with a time and type key
+            if(!action["time"] || !action["type"]) {
+                return next(new BadRequestError("Please format all action objects with the time and type keys!")); 
+            }
             const time = action["time"]; 
             const type = action["type"]; 
 
