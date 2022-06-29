@@ -42,15 +42,17 @@ app.post("/api/v1/submit-log", async (req: Request, res: Response) => {
 ``
 }); 
 
-app.get("/api/v1/:userId/:actionType/retrieve-logs", async (req: Request, res: Response) => {
+app.get("/api/v1/:userId/:actionType/:lowerBoundTime/:upperBoundTime/retrieve-logs", async (req: Request, res: Response) => {
     // set req.params variables to wildcard match any string "%" in db column if their value is "any"
     let userId = req.params.userId.toLowerCase()=="any" ? "%" : req.params.userId; 
     let actionType = req.params.actionType.toLowerCase()=="any" ? "%" : req.params.actionType.toUpperCase(); 
+    const actionTime = "2018-10-18T21:37:28-06:00"; 
 
     const result = await pool.query(
-        "SELECT actionObj FROM UserSessionLogs WHERE userId LIKE $1 AND actionType LIKE $2", 
+        "SELECT actionObj FROM UserSessionLogs WHERE userId LIKE $1 AND actionType LIKE $2 AND actionTime=$3::timestamptz", 
         [userId, 
-        actionType]
+        actionType, 
+        actionTime]
         ); 
 
     let response = []
