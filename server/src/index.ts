@@ -57,7 +57,7 @@ app.get("/api/v1/:userId/:actionType/:lowerBoundTime/:upperBoundTime/retrieve-lo
 
     try {
         const result = await pool.query(
-            "SELECT actionObj FROM UserSessionLogs WHERE userId LIKE $1 AND actionType LIKE $2 AND actionTime>=$3::timestamptz AND actionTime<=$4::timestamptz", 
+            "SELECT userId, sessionId, actionObj FROM UserSessionLogs WHERE userId LIKE $1 AND actionType LIKE $2 AND actionTime>=$3::timestamptz AND actionTime<=$4::timestamptz", 
             [userId, 
             actionType, 
             lowerBoundTime, 
@@ -65,8 +65,12 @@ app.get("/api/v1/:userId/:actionType/:lowerBoundTime/:upperBoundTime/retrieve-lo
             ); 
     
         let response = []
-        for (const actionObj of result.rows) {
-            response.push(actionObj.actionobj); 
+        for (const resultObj of result.rows) {
+            response.push({
+                "userId": resultObj.userid, 
+                "sessionId": resultObj.sessionid,
+                "action": resultObj.actionobj 
+            }); 
         }
     
         res.json({"logs-from-db": response}); 
