@@ -129,7 +129,7 @@ it("returns Bad Request Error when an action object doesn't have a type key", as
         .expect(400); 
 })
 
-it("returns a response array after successfully inserting into db when provided valid data", async () => {
+it("returns a 201 status after successfully inserting into db when provided valid data", async () => {
     await request(app)
         .post('/api/v1/submit-log')
         .send({

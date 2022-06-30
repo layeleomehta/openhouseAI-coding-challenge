@@ -37,7 +37,7 @@ router.get("/api/v1/:userId/:actionType/:lowerBoundTime/:upperBoundTime/retrieve
         }
 
         // respond with the response array: contains all relevant logs based on search params
-        res.json({"logs-from-db": response}); 
+        res.status(200).json({"logs-from-db": response}); 
         
     } catch (err: any) {
         console.error(err.message); 
