@@ -39,7 +39,7 @@ router.post("/api/v1/submit-log", async (req: Request, res: Response, next: Next
         }
 
         // send back all query outputs via JSON object under 'inserted-to-db' key.  
-        res.json({
+        res.status(201).json({
             "inserted-to-db": response
         });
         
